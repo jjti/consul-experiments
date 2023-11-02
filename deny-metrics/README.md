@@ -62,27 +62,23 @@ kubectl logs a-b8c4bd8c4-7v587 -n dmetrics -c consul-dataplane
 'x-envoy-upstream-service-time', '1'
 ```
 
-```
-{__name__="envoy_cluster_upstream_cx_connect_fail", app="a", consul_hashicorp_com_connect_inject_managed_by="consul-k8s-endpoints-controller", consul_hashicorp_com_connect_inject_status="injected", consul_source_datacenter="dc1", consul_source_namespace="default", consul_source_partition="default", consul_source_service="a", envoy_cluster_name="local_app", instance="10.244.0.24:20200", job="kubernetes-pods", local_cluster="a", namespace="dmetrics", node="kind-control-plane", pod="a-b8c4bd8c4-7v587", pod_template_hash="b8c4bd8c4"}
-```
-
 #### envoy_cluster_upstream_rq_xx{envoy_response_code_class="4"}
 
 ```
 rate(envoy_cluster_upstream_rq_xx{consul_destination_service!=""}[5m:])
-
-{app="a", consul_destination_datacenter="dc1", consul_destination_full_target="b.default.dc1.internal.507b776e-1a6e-f754-c542-488c03a3b35f", consul_destination_namespace="default", consul_destination_routing_type="internal", consul_destination_service="b", consul_destination_target="b.default.dc1", consul_destination_trust_domain="507b776e-1a6e-f754-c542-488c03a3b35f", consul_hashicorp_com_connect_inject_managed_by="consul-k8s-endpoints-controller", consul_hashicorp_com_connect_inject_status="injected", consul_source_datacenter="dc1", consul_source_namespace="default", consul_source_partition="default", consul_source_service="a", envoy_cluster_name="b", envoy_response_code_class="4", instance="10.244.0.24:20200", job="kubernetes-pods", local_cluster="a", namespace="dmetrics", node="kind-control-plane", pod="a-b8c4bd8c4-7v587", pod_template_hash="b8c4bd8c4"}
 ```
+
+> {app="a", consul_destination_datacenter="dc1", consul_destination_full_target="b.default.dc1.internal.507b776e-1a6e-f754-c542-488c03a3b35f", consul_destination_namespace="default", consul_destination_routing_type="internal", consul_destination_service="b", consul_destination_target="b.default.dc1", consul_destination_trust_domain="507b776e-1a6e-f754-c542-488c03a3b35f", consul_hashicorp_com_connect_inject_managed_by="consul-k8s-endpoints-controller", consul_hashicorp_com_connect_inject_status="injected", consul_source_datacenter="dc1", consul_source_namespace="default", consul_source_partition="default", consul_source_service="a", envoy_cluster_name="b", envoy_response_code_class="4", instance="10.244.0.24:20200", job="kubernetes-pods", local_cluster="a", namespace="dmetrics", node="kind-control-plane", pod="a-b8c4bd8c4-7v587", pod_template_hash="b8c4bd8c4"}
 
 #### envoy_http_rbac_denied
 
-RBAC denied metrics are incremented, but they're from the upstream and not annotated with the calling service.
+RBAC denied metrics are incremented, but they're from the upstream listener and are not annotated with the downstream service.
 
 ```
 rate(envoy_http_rbac_denied[5m:])
-
-{app="b", consul_hashicorp_com_connect_inject_managed_by="consul-k8s-endpoints-controller", consul_hashicorp_com_connect_inject_status="injected", consul_source_datacenter="dc1", consul_source_namespace="default", consul_source_partition="default", consul_source_service="b", envoy_http_conn_manager_prefix="public_listener", instance="10.244.0.25:20200", job="kubernetes-pods", local_cluster="b", namespace="dmetrics", node="kind-control-plane", pod="b-66cbd46467-6z2dg", pod_template_hash="66cbd46467"}
 ```
+
+> {app="b", consul_hashicorp_com_connect_inject_managed_by="consul-k8s-endpoints-controller", consul_hashicorp_com_connect_inject_status="injected", consul_source_datacenter="dc1", consul_source_namespace="default", consul_source_partition="default", consul_source_service="b", envoy_http_conn_manager_prefix="public_listener", instance="10.244.0.25:20200", job="kubernetes-pods", local_cluster="b", namespace="dmetrics", node="kind-control-plane", pod="b-66cbd46467-6z2dg", pod_template_hash="66cbd46467"}
 
 ### allow-all > deny-all
 

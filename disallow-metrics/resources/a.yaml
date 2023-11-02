@@ -1,0 +1,48 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  name: a
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: a
+  labels:
+    app: a
+spec:
+  selector:
+    app: a
+  ports:
+    - protocol: TCP
+      port: 1010
+      targetPort: 1010
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: a
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: a
+  template:
+    metadata:
+      name: a
+      labels:
+        app: a
+      annotations:
+        consul.hashicorp.com/connect-inject: "true"
+        consul.hashicorp.com/connect-service-upstreams: "b:9090"
+        consul.hashicorp.com/service-meta-version: "v1"
+    spec:
+      containers:
+        - name: a
+          image: curlimages/curl:latest
+          # Just spin & wait forever, we'll use `kubectl exec` to demo
+          command: ["/bin/sh", "-c", "--"]
+          args: ["watch -n 1 curl localhost:9090"]
+      # If ACLs are enabled, the serviceAccountName must match the Consul service name.
+      serviceAccountName: a

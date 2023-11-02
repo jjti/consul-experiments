@@ -1,0 +1,33 @@
+# https://github.com/hashicorp/consul-k8s/blob/main/charts/consul/values.yaml
+global:
+  image: hashicorp/consul:1.16.3
+  datacenter: dc1
+  logLevel: trace
+  tls:
+    enabled: true
+    enableAutoEncrypt: true
+    verify: true
+  acls:
+    manageSystemACLs: true
+    secretKey: "key"
+
+  metrics:
+    enabled: true
+    enableAgentMetrics: true
+    agentMetricsRetentionTime: "1m"
+
+connectInject:
+  enabled: true
+  default: true
+
+  # https://developer.hashicorp.com/consul/tutorials/service-mesh-observability/hashiconf-2023
+  metrics:
+    defaultEnabled: true
+
+server:
+  enabled: true
+  replicas: 1
+  extraConfig: |
+    {
+      "log_level": "TRACE"
+    }

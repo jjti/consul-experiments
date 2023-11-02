@@ -1,6 +1,8 @@
-# disallow-metrics
+# deny-metrics
 
-Which metrics can we use to monitor denied requests from downstream proxies to upstreams. This will happen if intentions and/or a cluster's [`acl.default_policy`](https://developer.hashicorp.com/consul/docs/agent/config/config-files#acl_default_policy) denies those calls.
+Which metrics can we use to monitor denied requests from downstream proxies to upstreams?
+
+For deny intentions and/or a cluster's [`acl.default_policy`](https://developer.hashicorp.com/consul/docs/agent/config/config-files#acl_default_policy).
 
 ## Background
 
@@ -83,3 +85,7 @@ rate(envoy_http_rbac_denied[5m:])
 ```
 
 ### allow-all > deny-all
+
+## Learnings
+
+Consul has an internal cluster ID (UUID) that's mapped to consul_destination_trust_domain: https://github.com/hashicorp/consul/issues/6142

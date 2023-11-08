@@ -21,3 +21,9 @@ helm install consul hashicorp/consul -f ./helm/consul.yaml
 # install Consul Telemetry Collector
 k apply -f ./resources/consul-telemetry-collector.yaml
 ```
+
+Or to install with consul-k8s:
+
+```bash
+consul-k8s install -f ./helm/consul.yaml --namespace default
+```

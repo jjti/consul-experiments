@@ -51,6 +51,7 @@ global:
     enableAutoEncrypt: true
     enabled: true
     verify: false
+    httpsOnly: false
 meshGateway:
   # enableHealthChecks: false
   enabled: false
@@ -80,7 +81,7 @@ telemetryCollector:
     clientSecret:
       secretKey: client-secret
       secretName: consul-hcp-observability-client-secret
-  enabled: true
+  # enabled: false
 terminatingGateways:
   enabled: true
   gateways:
@@ -90,4 +91,4 @@ ui:
   enabled: true
   service:
     enabled: true
-    type: LoadBalancer
+    type: ClusterIP

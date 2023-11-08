@@ -15,5 +15,9 @@ CONSUL_LICENSE=
 kubectl create secret generic consul-ent-license --from-literal="license=${CONSUL_LICENSE}"
 kubectl create secret generic consul-bootstrap-token --from-literal="token=c6443ead-d245-4ffa-96e6-f30c8e911ab8"
 
+# install consul
 helm install consul hashicorp/consul -f ./helm/consul.yaml
+
+# install Consul Telemetry Collector
+k apply -f ./resources/consul-telemetry-collector.yaml
 ```

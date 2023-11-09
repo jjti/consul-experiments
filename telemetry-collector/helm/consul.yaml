@@ -2,14 +2,22 @@ client:
   enabled: false
   grpc: true
 connectInject:
+  default: true
   consulNamespaces:
     mirroringK8S: true
   enabled: true
   logLevel: trace
   transparentProxy:
     defaultEnabled: true
+
+syncCatalog:
+  enabled: true
+  consulNamespaces:
+    mirroringK8S: true
+
 controller:
   enabled: true
+
 global:
   acls:
     bootstrapToken:
@@ -18,6 +26,7 @@ global:
     manageSystemACLs: true
   adminPartitions:
     enabled: true
+    # name: test-partition
   cloud:
     clientId:
       secretKey: client-id
@@ -65,7 +74,7 @@ server:
   enabled: true
   exposeService:
     enabled: true
-    type: LoadBalancer
+    type: ClusterIP
   extraConfig: |
     {
       "acl": {
@@ -83,10 +92,8 @@ telemetryCollector:
       secretName: consul-hcp-observability-client-secret
   # enabled: false
 terminatingGateways:
-  enabled: true
-  gateways:
-    - name: terminating-gateway
-  logLevel: debug
+  enabled: false
+
 ui:
   enabled: true
   service:

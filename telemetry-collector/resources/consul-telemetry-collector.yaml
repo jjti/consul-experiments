@@ -4,7 +4,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: consul-telemetry-collector
-  namespace: default
+  namespace: test-namespace
   labels:
     app: consul
     release: consul
@@ -24,7 +24,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: consul-telemetry-collector
-  namespace: default
+  namespace: test-namespace
   labels:
     app: consul
     release: consul
@@ -35,54 +35,50 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: consul-telemetry-collector
-  namespace: default
+  namespace: test-namespace
   labels:
     app: consul
-    release: consul
+    chart: consul-helm
+    heritage: Helm
+    release: release-name
     component: consul-telemetry-collector
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: consul
-      release: consul
+      chart: consul-helm
+      release: release-name
       component: consul-telemetry-collector
   template:
     metadata:
-      labels:
-        app: consul
-        release: consul
-        component: consul-telemetry-collector
-        consul.hashicorp.com/connect-inject-managed-by: consul-k8s-endpoints-controller
       annotations:
         "consul.hashicorp.com/connect-inject": "false"
+        # This annotation tells the endpoints controller that this pod was injected even though it wasn't. The
+        # endpoints controller would then sync the endpoint into Consul
         "consul.hashicorp.com/connect-inject-status": "injected"
-        # "consul.hashicorp.com/connect-service": "consul-telemetry-collector"
+        # We aren't using tproxy and we don't have an original pod. This would be simpler if we made a path similar
+        # to gateways
         "consul.hashicorp.com/connect-service-port": "metricsserver"
         "consul.hashicorp.com/transparent-proxy": "false"
         "consul.hashicorp.com/transparent-proxy-overwrite-probes": "false"
-        "consul.hashicorp.com/connect-k8s-version": 1.2.2
+        "consul.hashicorp.com/connect-k8s-version": 1.4.0-dev
+        # vault annotations
+
+      labels:
+        consul.hashicorp.com/connect-inject-managed-by: consul-k8s-endpoints-controller
+        app: consul
+        chart: consul-helm
+        release: release-name
+        component: consul-telemetry-collector
     spec:
       # This needs to explicitly be consul-telemetry-collector because we look this up from each service consul-dataplane
       # to forward metrics to it.
       serviceAccountName: consul-telemetry-collector
-      volumes:
-        - name: consul-service
-          emptyDir:
-            medium: "Memory"
-        - name: consul-ca-cert
-          secret:
-            secretName: consul-ca-cert
-            items:
-              - key: tls.crt
-                path: tls.crt
-        - name: config
-          configMap:
-            name: consul-telemetry-collector
       initContainers:
         # We're manually managing this init container instead of using the connect injector so that we don't run into
         # any race conditions on the connect-injector deployment or upgrade
-        - name: consul-telemetry-collector-init
+        - name: consul-connect-init
           env:
             - name: POD_NAMESPACE
               valueFrom:
@@ -96,14 +92,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-            - name: CONSUL_LOGIN_AUTH_METHOD
-              value: consul-k8s-auth-method
-            - name: CONSUL_LOGIN_META
-              value: "component=consul-telemetry-collector,pod=$(NAMESPACE)/$(POD_NAME)"
             - name: CONSUL_NODE_NAME
               value: $(NODE_NAME)-virtual
             - name: CONSUL_ADDRESSES
-              value: consul-server.default.svc
+              value: consul-server.test-namespace.svc
             - name: CONSUL_GRPC_PORT
               value: "8502"
             - name: CONSUL_HTTP_PORT
@@ -122,22 +114,31 @@ spec:
               value: "/consul/tls/ca/tls.crt"
             - name: CONSUL_TLS_SERVER_NAME
               value: server.dc1.consul
+            # acl login info
+            - name: CONSUL_LOGIN_AUTH_METHOD
+              value: consul-k8s-auth-method
+            - name: CONSUL_LOGIN_DATACENTER
+              value: dc1
+            - name: CONSUL_LOGIN_META
+              value: "component=consul-telemetry-collector,pod=$(NAMESPACE)/$(POD_NAME)"
+            # service and login namespace
+            # this is attempting to replicate the behavior of webhooks in calculating namespace
+            # https://github.com/hashicorp/consul-k8s/blob/b84339050bb2c4b62b60cec96275f74952b0ac9d/control-plane/connect-inject/webhook/consul_dataplane_sidecar.go#L200
             - name: CONSUL_NAMESPACE
-              value: default
+              value: test-namespace
             - name: CONSUL_LOGIN_NAMESPACE
-              value: "default"
+              value: default
           command:
             - /bin/sh
             - -ec
-            - |
-              consul-k8s-control-plane connect-init \
-                -pod-name=${POD_NAME} \
-                -pod-namespace=${POD_NAMESPACE} \
-                -service-name="" \
+            - |-
+              consul-k8s-control-plane connect-init -pod-name=${POD_NAME} -pod-namespace=${POD_NAMESPACE} \
+                -log-level=trace \
+                -log-json=false \
                 -service-account-name="consul-telemetry-collector" \
-                -proxy-id-file=/consul/service/proxyid \
-                -log-level=debug \
-                -log-json=false
+                -service-name="" \
+                -proxy-id-file="/consul/connect-inject/proxyid"
+
           image: hashicorp/consul-k8s-control-plane:1.2.2
           imagePullPolicy: IfNotPresent
           resources:
@@ -147,29 +148,18 @@ spec:
             requests:
               cpu: 50m
               memory: 25Mi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-              add:
-                - NET_BIND_SERVICE
-            runAsNonRoot: true
-            seccompProfile:
-              type: RuntimeDefault
-            runAsUser: 100
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
           volumeMounts:
-            - name: consul-service
-              mountPath: /consul/service
+            - mountPath: /consul/connect-inject
+              name: consul-connect-inject-data
             - name: consul-ca-cert
               mountPath: /consul/tls/ca
               readOnly: true
       containers:
         - name: consul-telemetry-collector
-          image: hashicorp/consul-telemetry-collector:0.0.1
-          imagePullPolicy: Always
+          image: hashicorp/consul-telemetry-collector:0.0.2
+          imagePullPolicy:
           ports:
             - containerPort: 9090
               name: metrics
@@ -219,22 +209,29 @@ spec:
           command:
             - consul-dataplane
           args:
-            - -addresses=consul-server.default.svc
-            - -ca-certs=/consul/tls/ca/tls.crt
-            - -credential-type=login
-            - -envoy-concurrency=2
+            # addresses
+            - -addresses=consul-server.test-namespace.svc
+            # grpc
             - -grpc-port=8502
-            - -log-json=false
-            - -log-level=trace
-            - -login-auth-method=consul-k8s-auth-method
-            - -login-bearer-token-path=/var/run/secrets/kubernetes.io/serviceaccount/token
-            - -login-namespace=default
-            - -login-partition=default
-            - -proxy-service-id-path=/consul/service/proxyid
-            - -service-namespace=default
-            - -service-partition=default
-            - -telemetry-prom-scrape-path=/metrics
+            - -proxy-service-id-path=/consul/connect-inject/proxyid
+            # tls
+            - -ca-certs=/consul/tls/ca/tls.crt
             - -tls-server-name=server.dc1.consul
+            # credentials
+            - -credential-type=login
+            - -login-bearer-token-path=/var/run/secrets/kubernetes.io/serviceaccount/token
+            - -login-auth-method=consul-k8s-auth-method
+            # service and login namespace
+            - -service-namespace=test-namespace
+            - -login-namespace=default
+            # service and login partition
+            - -service-partition=default
+            - -login-partition=default
+            # telemetry
+            - -telemetry-prom-scrape-path=/metrics
+            - -log-level=trace
+            - -log-json=false
+            - -envoy-concurrency=2
           env:
             - name: NAMESPACE
               valueFrom:
@@ -255,7 +252,7 @@ spec:
             - name: DP_SERVICE_NODE_NAME
               value: $(NODE_NAME)-virtual
             - name: TMPDIR
-              value: /consul/service
+              value: /consul/connect-inject
           readinessProbe:
             failureThreshold: 3
             initialDelaySeconds: 1
@@ -271,8 +268,21 @@ spec:
             runAsUser: 5995
           # dataplane volume mounts
           volumeMounts:
-            - name: consul-service
-              mountPath: /consul/service
+            - mountPath: /consul/connect-inject
+              name: consul-connect-inject-data
             - name: consul-ca-cert
               mountPath: /consul/tls/ca
               readOnly: true
+      volumes:
+        - emptyDir:
+            medium: Memory
+          name: consul-connect-inject-data
+        - name: consul-ca-cert
+          secret:
+            secretName: consul-ca-cert
+            items:
+              - key: tls.crt
+                path: tls.crt
+        - name: config
+          configMap:
+            name: consul-telemetry-collector

@@ -27,3 +27,9 @@ Or to install with consul-k8s:
 ```bash
 consul-k8s install -f ./helm/consul.yaml --namespace default
 ```
+
+## Modified Template
+
+```bash
+helm template -s templates/telemetry-collector-deployment.yaml -f /Users/josh/GitHub/jjti/consul-exp/telemetry-collector/helm/consul.yaml --set 'telemetryCollector.enabled=true' --set 'global.adminPartitions.enabled=true' --set 'global.enableConsulNamespaces=true' --set 'connectInject.consulNamespaces.mirroringK8S=true' --namespace test-namespace . > /tmp/telem.yaml
+```

@@ -1,0 +1,14 @@
+global:
+  enableConsulNamespaces: true
+  tls:
+    enabled: true
+  image: hashicorp/consul-enterprise:1.16.3-ent
+  adminPartitions:
+    enabled: true
+  acls:
+    manageSystemACLs: true
+  enterpriseLicense:
+    secretName: consul-license
+    secretKey: license
+meshGateway:
+  enabled: true

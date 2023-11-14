@@ -4,7 +4,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: consul-telemetry-collector
-  namespace: default
+  namespace: consul
   labels:
     app: consul
     release: consul
@@ -24,7 +24,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: consul-telemetry-collector
-  namespace: default
+  namespace: consul
   labels:
     app: consul
     release: consul
@@ -35,7 +35,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: consul-telemetry-collector
-  namespace: default
+  namespace: consul
   labels:
     app: consul
     chart: consul-helm
@@ -57,6 +57,7 @@ spec:
         # This annotation tells the endpoints controller that this pod was injected even though it wasn't. The
         # endpoints controller would then sync the endpoint into Consul
         "consul.hashicorp.com/connect-inject-status": "injected"
+        "consul.hashicorp.com/telemetry-collector": "true"
         # We aren't using tproxy and we don't have an original pod. This would be simpler if we made a path similar
         # to gateways
         "consul.hashicorp.com/connect-service-port": "metricsserver"
@@ -95,7 +96,7 @@ spec:
             - name: CONSUL_NODE_NAME
               value: $(NODE_NAME)-virtual
             - name: CONSUL_ADDRESSES
-              value: consul-server.default.svc
+              value: 172.18.255.201
             - name: CONSUL_GRPC_PORT
               value: "8502"
             - name: CONSUL_HTTP_PORT
@@ -105,9 +106,9 @@ spec:
             - name: CONSUL_API_TIMEOUT
               value: 5s
             - name: CONSUL_PARTITION
-              value: test-partition
+              value: partition-workload
             - name: CONSUL_LOGIN_PARTITION
-              value: test-partition
+              value: partition-workload
             - name: CONSUL_USE_TLS
               value: "true"
             - name: CONSUL_CACERT_FILE
@@ -125,21 +126,23 @@ spec:
             # this is attempting to replicate the behavior of webhooks in calculating namespace
             # https://github.com/hashicorp/consul-k8s/blob/b84339050bb2c4b62b60cec96275f74952b0ac9d/control-plane/connect-inject/webhook/consul_dataplane_sidecar.go#L200
             - name: CONSUL_NAMESPACE
-              value: default
+              value: consul
             - name: CONSUL_LOGIN_NAMESPACE
               value: default
           command:
             - /bin/sh
             - -ec
             - |-
-              consul-k8s-control-plane connect-init -pod-name=${POD_NAME} -pod-namespace=${POD_NAMESPACE} \
-                -log-level=trace \
+              consul-k8s-control-plane connect-init \
                 -log-json=false \
+                -log-level=info \
+                -pod-name=${POD_NAME} \
+                -pod-namespace=${POD_NAMESPACE} \
+                -proxy-id-file="/consul/connect-inject/proxyid" \
                 -service-account-name="consul-telemetry-collector" \
-                -service-name="" \
-                -proxy-id-file="/consul/connect-inject/proxyid"
+                -service-name=""
 
-          image: hashicorp/consul-k8s-control-plane:1.2.2
+          image: docker.mirror.hashicorp.services/hashicorppreview/consul-k8s-control-plane:1.4-dev
           imagePullPolicy: IfNotPresent
           resources:
             limits:
@@ -172,21 +175,6 @@ spec:
             # - the hcp-go-sdk in consul agent will already look for HCP_CLIENT_ID, HCP_CLIENT_SECRET, HCP_AUTH_URL,
             #   HCP_SCADA_ADDRESS, and HCP_API_HOST.  so nothing more needs to be done.
             # - HCP_RESOURCE_ID is created for use in the global cloud section but we will share it here
-            - name: HCP_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: consul-hcp-observability-client-id
-                  key: client-id
-            - name: HCP_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: consul-hcp-observability-client-secret
-                  key: client-secret
-            - name: HCP_RESOURCE_ID
-              valueFrom:
-                secretKeyRef:
-                  name: consul-hcp-resource-id
-                  key: resource-id
 
           command:
             - "/bin/sh"
@@ -204,13 +192,13 @@ spec:
               memory: 512Mi
         # consul-dataplane container
         - name: consul-dataplane
-          image: "hashicorp/consul-dataplane:1.2.2"
+          image: "docker.mirror.hashicorp.services/hashicorppreview/consul-dataplane:1.4-dev"
           imagePullPolicy: IfNotPresent
           command:
             - consul-dataplane
           args:
             # addresses
-            - -addresses=consul-server.default.svc
+            - -addresses=172.18.255.201
             # grpc
             - -grpc-port=8502
             - -proxy-service-id-path=/consul/connect-inject/proxyid
@@ -222,14 +210,13 @@ spec:
             - -login-bearer-token-path=/var/run/secrets/kubernetes.io/serviceaccount/token
             - -login-auth-method=consul-k8s-auth-method
             # service and login namespace
-            - -service-namespace=default
+            - -service-namespace=consul
             - -login-namespace=default
             # service and login partition
-            - -service-partition=test-partition
-            - -login-partition=test-partition
+            - -service-partition=partition-workload
+            - -login-partition=partition-workload
             # telemetry
-            - -telemetry-prom-scrape-path=/metrics
-            - -log-level=trace
+            - -log-level=info
             - -log-json=false
             - -envoy-concurrency=2
           env:
@@ -279,7 +266,7 @@ spec:
           name: consul-connect-inject-data
         - name: consul-ca-cert
           secret:
-            secretName: consul-ca-cert
+            secretName: server-consul-ca-cert
             items:
               - key: tls.crt
                 path: tls.crt

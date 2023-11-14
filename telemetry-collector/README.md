@@ -2,34 +2,63 @@
 
 ## Set up
 
+deploy server partition
+
 ```bash
-# everything below is copy/pasted from the UI during linking of an existing cluster
-kubectl create secret generic consul-hcp-client-id --from-literal=client-id=''
-kubectl create secret generic consul-hcp-client-secret --from-literal=client-secret=''
-kubectl create secret generic consul-hcp-observability-client-id --from-literal=client-id=''
-kubectl create secret generic consul-hcp-observability-client-secret --from-literal=client-secret=''
-kubectl create secret generic consul-hcp-resource-id --from-literal=resource-id=''
+export CONSUL_LICENSE=$(op read "")
+export HELM_RELEASE_SERVER=server
 
-# https://developer.hashicorp.com/consul/docs/k8s/deployment-configurations/consul-enterprise
-CONSUL_LICENSE=
-kubectl create secret generic consul-ent-license --from-literal="license=${CONSUL_LICENSE}"
-kubectl create secret generic consul-bootstrap-token --from-literal="token=c6443ead-d245-4ffa-96e6-f30c8e911ab8"
+kubectl config set-context kind-server --namespace consul
+kubectl config use-context kind-server
+kubectl create namespace consul
 
-# install consul
-helm install consul hashicorp/consul -f ./helm/consul.yaml
+# install metal lb
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
+kubectl apply -f ./resources/metal-lb.yaml
 
-# install Consul Telemetry Collector
-k apply -f ./resources/consul-telemetry-collector.yaml
+# create secrets
+kubectl create secret generic consul-license --from-literal="license=${CONSUL_LICENSE}"
+kubectl create secret generic consul-hcp-client-id --from-literal=client-id='x'
+kubectl create secret generic consul-hcp-client-secret --from-literal=client-secret='y'
+kubectl create secret generic consul-hcp-observability-client-id --from-literal=client-id='x'
+kubectl create secret generic consul-hcp-observability-client-secret --from-literal=client-secret='y'
+kubectl create secret generic consul-hcp-resource-id --from-literal=resource-id='z'
+
+# install server
+helm install ${HELM_RELEASE_SERVER} hashicorp/consul --namespace consul --values ./helm/partition-server.yaml
 ```
 
-Or to install with consul-k8s:
+deploy client partition
 
 ```bash
-consul-k8s install -f ./helm/consul.yaml --namespace default
+# print consul server ip
+kubectl get services --selector="app=consul,component=server" --namespace consul --output jsonpath="{range .items[*]}{@.status.loadBalancer.ingress[*].ip}{end}" --context kind-server
+172.18.255.201
+
+# get k8s auth endpoint in non-default partition/cluster
+kubectl config view --output "jsonpath={.clusters[?(@.name=='kind-client')].cluster.server}"
+https://127.0.0.1:50937
+
+# set both in partition-server.yaml
+
+# create secrets
+kubectl config set-context kind-client --namespace consul
+kubectl config use-context kind-client
+kubectl create namespace consul
+
+# copy server ca
+kubectl get secret server-consul-ca-cert --context kind-server -n consul --output yaml | kubectl apply --namespace consul --context kind-client --filename -
+kubectl get secret server-consul-ca-key --context kind-server --namespace consul --output yaml | kubectl apply --namespace consul --context kind-client --filename -
+kubectl get secret server-consul-partitions-acl-token --context kind-server --namespace consul --output yaml | kubectl apply --namespace consul --context kind-client --filename -
+
+helm install client hashicorp/consul --namespace consul --values ./helm/partition-client.yaml
+
+# making changes
+helm upgrade client hashicorp/consul -f ./helm/partition-client.yaml
 ```
 
-## Modified Template
+deploy consul telemetry collector to client partition:
 
 ```bash
-helm template -s templates/telemetry-collector-deployment.yaml -f /Users/josh/GitHub/jjti/consul-exp/telemetry-collector/helm/consul.yaml --set 'telemetryCollector.enabled=true' --set 'global.adminPartitions.enabled=true' --set 'global.enableConsulNamespaces=true' --set 'connectInject.consulNamespaces.mirroringK8S=true' --namespace test-namespace . > /tmp/telem.yaml
+kubectl apply -f ./resources/consul-telemetry-collector-test.yaml --namespace consul --context kind-client
 ```

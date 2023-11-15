@@ -6,8 +6,7 @@ deploy server partition
 
 ```bash
 export CONSUL_LICENSE=$(op read "")
-export HELM_RELEASE_SERVER=server
-
+kind create cluster --name server
 kubectl config set-context kind-server --namespace consul
 kubectl config use-context kind-server
 kubectl create namespace consul
@@ -18,14 +17,14 @@ kubectl apply -f ./resources/metal-lb.yaml
 
 # create secrets
 kubectl create secret generic consul-license --from-literal="license=${CONSUL_LICENSE}"
-kubectl create secret generic consul-hcp-client-id --from-literal=client-id='x'
-kubectl create secret generic consul-hcp-client-secret --from-literal=client-secret='y'
-kubectl create secret generic consul-hcp-observability-client-id --from-literal=client-id='x'
-kubectl create secret generic consul-hcp-observability-client-secret --from-literal=client-secret='y'
-kubectl create secret generic consul-hcp-resource-id --from-literal=resource-id='z'
+kubectl create secret generic consul-hcp-client-id --from-literal=client-id='brDBXplHdiLIapwYRjaVKsUWZz1170Zw'
+kubectl create secret generic consul-hcp-client-secret --from-literal=client-secret='LjWim_Q5r9IU959mBOT7TXzwntHE-0X4mP26NxAVphnk1ZsLb9qYuOVDIak8JwVn'
+kubectl create secret generic consul-hcp-observability-client-id --from-literal=client-id='fKj59paYy4BgQ7gsrefFfXuMG01KIulG'
+kubectl create secret generic consul-hcp-observability-client-secret --from-literal=client-secret='G4hIdJN8ExJE4bN5-DAGptDgoFFXQQ0wtu7wyrBQ68Wv7uUr94U0IlgFelVAj1iv'
+kubectl create secret generic consul-hcp-resource-id --from-literal=resource-id='organization/f785e2d8-b8f5-4676-8675-1e33ad6eb6fe/project/e4065767-bd61-4f00-8b2b-81f631f7d4d1/hashicorp.consul.global-network-manager.cluster/josh-fix-helm-2'
 
 # install server
-helm install ${HELM_RELEASE_SERVER} hashicorp/consul --namespace consul --values ./helm/partition-server.yaml
+helm install server hashicorp/consul --namespace consul --values ./helm/partition-server.yaml
 ```
 
 deploy client partition
@@ -51,7 +50,7 @@ kubectl get secret server-consul-ca-cert --context kind-server -n consul --outpu
 kubectl get secret server-consul-ca-key --context kind-server --namespace consul --output yaml | kubectl apply --namespace consul --context kind-client --filename -
 kubectl get secret server-consul-partitions-acl-token --context kind-server --namespace consul --output yaml | kubectl apply --namespace consul --context kind-client --filename -
 
-helm install client hashicorp/consul --namespace consul --values ./helm/partition-client.yaml
+helm install client hashicorp/consul --values ./helm/partition-client.yaml
 
 # making changes
 helm upgrade client hashicorp/consul -f ./helm/partition-client.yaml

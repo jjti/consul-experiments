@@ -27,7 +27,7 @@ externalServers:
   enabled: true
   hosts: ["172.18.255.201"] # See step 4 from `Install Consul server cluster`
   tlsServerName: server.dc1.consul
-  k8sAuthMethodHost: https://172.18.0.2:6443
+  k8sAuthMethodHost: https://172.18.0.3:6443
   # k8sAuthMethodHost: https://127.0.0.1:50937 # See step 5 from `Install Consul server cluster`
 meshGateway:
   enabled: false

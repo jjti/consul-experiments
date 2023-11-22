@@ -1,5 +1,7 @@
 # Telemetry Collector
 
+A multi-partition set up used to debug consul telemetry collector
+
 ## Set up
 
 deploy server partition
@@ -17,11 +19,11 @@ kubectl apply -f ./resources/metal-lb.yaml
 
 # create secrets
 kubectl create secret generic consul-license --from-literal="license=${CONSUL_LICENSE}"
-kubectl create secret generic consul-hcp-client-id --from-literal=client-id='brDBXplHdiLIapwYRjaVKsUWZz1170Zw'
-kubectl create secret generic consul-hcp-client-secret --from-literal=client-secret='LjWim_Q5r9IU959mBOT7TXzwntHE-0X4mP26NxAVphnk1ZsLb9qYuOVDIak8JwVn'
-kubectl create secret generic consul-hcp-observability-client-id --from-literal=client-id='fKj59paYy4BgQ7gsrefFfXuMG01KIulG'
-kubectl create secret generic consul-hcp-observability-client-secret --from-literal=client-secret='G4hIdJN8ExJE4bN5-DAGptDgoFFXQQ0wtu7wyrBQ68Wv7uUr94U0IlgFelVAj1iv'
-kubectl create secret generic consul-hcp-resource-id --from-literal=resource-id='organization/f785e2d8-b8f5-4676-8675-1e33ad6eb6fe/project/e4065767-bd61-4f00-8b2b-81f631f7d4d1/hashicorp.consul.global-network-manager.cluster/josh-fix-helm-2'
+kubectl create secret generic consul-hcp-client-id --from-literal=client-id=''
+kubectl create secret generic consul-hcp-client-secret --from-literal=client-secret=''
+kubectl create secret generic consul-hcp-observability-client-id --from-literal=client-id=''
+kubectl create secret generic consul-hcp-observability-client-secret --from-literal=client-secret=''
+kubectl create secret generic consul-hcp-resource-id --from-literal=resource-id=''
 
 # install server
 helm install server hashicorp/consul --namespace consul --values ./helm/partition-server.yaml

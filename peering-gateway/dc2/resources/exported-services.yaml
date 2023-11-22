@@ -1,0 +1,10 @@
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ExportedServices
+metadata:
+  name: default
+  namespace: consul
+spec:
+  services:
+    - name: b
+      consumers:
+        - peer: dc1

@@ -15,16 +15,18 @@ For deny intentions and/or a cluster's [`acl.default_policy`](https://developer.
 ```bash
 NAMESPACE=dmetrics
 
+kubectl create namespace $NAMESPACE
+
 # install prometheus and grafana
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
 
-helm install prometheus prometheus-community/prometheus -f ./charts/prometheus.yaml -n "$NAMESPACE"
-helm install grafana grafana/grafana -f ./charts/grafana.yaml -n "$NAMESPACE"
+helm install prometheus prometheus-community/prometheus -f ./helm/prometheus.yaml -n "$NAMESPACE"
+helm install grafana grafana/grafana -f ./helm/grafana.yaml -n "$NAMESPACE"
 
 # install consul
-consul-k8s install -auto-approve -verbose -f ./charts/consul.yaml -n "$NAMESPACE" -wait
+consul-k8s install -auto-approve -verbose -f ./helm/consul.yaml --namespace "$NAMESPACE" -wait
 
 # install demo app
 kubectl apply -f ./resources/ -n "$NAMESPACE"
@@ -34,6 +36,8 @@ kubectl apply -f ./resources/ -n "$NAMESPACE"
 # open prometheus
 export POD_NAME=$(kubectl get pods --namespace $NAMESPACE -l "app.kubernetes.io/name=prometheus,app.kubernetes.io/instance=prometheus" -o jsonpath="{.items[0].metadata.name}")
 kubectl --namespace $NAMESPACE port-forward $POD_NAME 9090
+
+open localhost:9090
 
 # open grafana
 export POD_NAME=$(kubectl get pods --namespace $NAMESPACE -l "app.kubernetes.io/name=grafana,app.kubernetes.io/instance=grafana" -o jsonpath="{.items[0].metadata.name}")

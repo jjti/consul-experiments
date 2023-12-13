@@ -4,12 +4,12 @@ global:
   datacenter: dc1
   logLevel: trace
   tls:
-    enabled: true
-    enableAutoEncrypt: true
-    verify: true
+    enabled: false
+    # enableAutoEncrypt: true
+    # verify: true
   acls:
-    manageSystemACLs: true
-    secretKey: "key"
+    manageSystemACLs: false
+    # secretKey: "key"
 
   metrics:
     enabled: true

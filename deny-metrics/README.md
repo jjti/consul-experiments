@@ -13,7 +13,7 @@ For deny intentions and/or a cluster's [`acl.default_policy`](https://developer.
 ## Set up
 
 ```bash
-NAMESPACE=dmetrics
+NAMESPACE=default
 
 kubectl create namespace $NAMESPACE
 
@@ -37,13 +37,17 @@ kubectl apply -f ./resources/ -n "$NAMESPACE"
 export POD_NAME=$(kubectl get pods --namespace $NAMESPACE -l "app.kubernetes.io/name=prometheus,app.kubernetes.io/instance=prometheus" -o jsonpath="{.items[0].metadata.name}")
 kubectl --namespace $NAMESPACE port-forward $POD_NAME 9090
 
-open localhost:9090
+open http://localhost:9090
 
 # open grafana
 export POD_NAME=$(kubectl get pods --namespace $NAMESPACE -l "app.kubernetes.io/name=grafana,app.kubernetes.io/instance=grafana" -o jsonpath="{.items[0].metadata.name}")
 kubectl --namespace $NAMESPACE port-forward $POD_NAME 3000
 
-open localhost:3000
+# interacting with envoy admin
+kubectl --namespace $NAMESPACE port-forward deploy/a 19000
+curl http://localhost:19000/stats/prometheus\?filter\=server\|http
+
+open http://localhost:3000
 ```
 
 ## Results

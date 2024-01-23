@@ -53,7 +53,17 @@ kubectl port-forward service/consul-telemetry-collector '9356:9356'
 export CONSUL_HTTP_SSL_VERIFY=false
 export CONSUL_HTTP_ADDR=https://localhost:8501
 export CONSUL_HTTP_TOKEN="$TOKEN"
+```
 
+## Create a Proxy Default
+
+This is a proxy default that:
+
+1. pushes metrics from envoy proxies every 60s
+1. to a statically defined Consul Telemetry Collector cluster at 127.0.0.1:9356
+1. configures envoy to push metrics to that cluster
+
+```bash
 # create a default envoy metrics config
 # https://github.com/hashicorp/consul/blob/995ba32cc0882b407c89a1b9d126532a1097e45d/command/connect/envoy/bootstrap_config.go#L853
 cat >/tmp/proxy-defaults.hcl <<EOF
@@ -115,7 +125,11 @@ EOT
 EOF
 consul config write /tmp/proxy-defaults.hcl
 # consul config delete -kind proxy-defaults -name global
+```
 
+### Intention
+
+```bash
 # create an intention allowing metric pushing to the consul-telemetry-collector
 cat <<EOF | kubectl apply --namespace consul --filename -
 apiVersion: consul.hashicorp.com/v1alpha1

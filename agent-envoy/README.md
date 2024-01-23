@@ -55,9 +55,9 @@ export CONSUL_HTTP_ADDR=https://localhost:8501
 export CONSUL_HTTP_TOKEN="$TOKEN"
 ```
 
-## Create a Proxy Default
+## Create Proxy Defaults
 
-This is a proxy default that:
+This is proxy defaults that:
 
 1. pushes metrics from envoy proxies every 60s
 1. to a statically defined Consul Telemetry Collector cluster at 127.0.0.1:9356

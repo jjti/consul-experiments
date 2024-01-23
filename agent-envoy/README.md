@@ -63,6 +63,8 @@ This is a proxy default that:
 1. to a statically defined Consul Telemetry Collector cluster at 127.0.0.1:9356
 1. configures envoy to push metrics to that cluster
 
+It is equivalent to what [Consul servers do](https://github.com/hashicorp/consul/blob/995ba32cc0882b407c89a1b9d126532a1097e45d/command/connect/envoy/bootstrap_config.go#L853) to create a bootstrap config for Envoy proxies when a Consul Telemetry Collector is deployed to a mesh runtime.
+
 ```bash
 # create a default envoy metrics config
 # https://github.com/hashicorp/consul/blob/995ba32cc0882b407c89a1b9d126532a1097e45d/command/connect/envoy/bootstrap_config.go#L853

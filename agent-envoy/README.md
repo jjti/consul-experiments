@@ -2,6 +2,8 @@
 
 Configuring Envoy via Consul Agents to push metrics to a Consul Telemetry Collector in an adjacent K8s cluster.
 
+![arch](./img/arch.png)
+
 ```bash
 # install dependencies (from https://developer.hashicorp.com/consul/tutorials/developer-mesh/service-mesh-with-envoy-proxy)
 wget -O counting-service.zip https://github.com/hashicorp/demo-consul-101/releases/download/0.0.3.1/counting-service_darwin_amd64.zip

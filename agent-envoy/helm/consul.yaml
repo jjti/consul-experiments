@@ -1,0 +1,76 @@
+# https://github.com/hashicorp/consul-k8s/blob/main/charts/consul/values.yaml
+global:
+  datacenter: dc1
+  logLevel: debug
+
+  image: hashicorp/consul-enterprise:1.17.1-ent
+  enterpriseLicense:
+    secretName: consul-license
+    secretKey: license
+
+  # tls:
+  #   enabled: false
+    # enableAutoEncrypt: true
+    # verify: true
+
+  acls:
+    manageSystemACLs: true
+    bootstrapToken:
+      secretName: consul-bootstrap-token
+      secretKey: token
+
+  metrics:
+    agentMetricsRetentionTime: "1m"
+    enableAgentMetrics: true
+    enableTelemetryCollector: true
+    enabled: true
+
+  cloud:
+    clientId:
+      secretKey: client-id
+      secretName: consul-hcp-client-id
+    clientSecret:
+      secretKey: client-secret
+      secretName: consul-hcp-client-secret
+    enabled: true
+    resourceId:
+      secretKey: resource-id
+      secretName: consul-hcp-resource-id
+
+  tls:
+    enableAutoEncrypt: true
+    enabled: true
+    verify: false
+    httpsOnly: false
+
+connectInject:
+  enabled: true
+  default: true
+
+  # https://developer.hashicorp.com/consul/tutorials/service-mesh-observability/hashiconf-2023
+  metrics:
+    defaultEnabled: true
+
+server:
+  enabled: true
+  replicas: 1
+  extraConfig: |
+    {
+      "log_level": "DEBUG"
+    }
+
+telemetryCollector:
+  cloud:
+    clientId:
+      secretKey: client-id
+      secretName: consul-hcp-observability-client-id
+    clientSecret:
+      secretKey: client-secret
+      secretName: consul-hcp-observability-client-secret
+  enabled: true
+
+ui:
+  enabled: true
+  service:
+    enabled: true
+    type: ClusterIP

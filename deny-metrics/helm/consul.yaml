@@ -1,8 +1,10 @@
 # https://github.com/hashicorp/consul-k8s/blob/main/charts/consul/values.yaml
 global:
-  image: hashicorp/consul:1.16.3
+  image: jjtimmons/consul:v0
+  imageConsulDataplane: jjtimmons/consul-dataplane:v4
+
   datacenter: dc1
-  logLevel: trace
+  logLevel: debug
   tls:
     enabled: false
     # enableAutoEncrypt: true
@@ -29,5 +31,5 @@ server:
   replicas: 1
   extraConfig: |
     {
-      "log_level": "TRACE"
+      "log_level": "DEBUG"
     }

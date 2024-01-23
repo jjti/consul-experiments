@@ -98,17 +98,17 @@ EOT
 
     envoy_extra_stats_sinks_json = <<EOT
         {
-            "name": "envoy.stat_sinks.metrics_service",
-            "typed_config": {
-                "@type": "type.googleapis.com/envoy.config.metrics.v3.MetricsServiceConfig",
-                "grpc_service": {
-                    "envoy_grpc": {
-                        "cluster_name": "consul_telemetry_collector"
-                    }
-                },
-                "transport_api_version": "V3",
-		        "emit_tags_as_labels": true
-            }
+          "name": "envoy.stat_sinks.metrics_service",
+          "typed_config": {
+            "@type": "type.googleapis.com/envoy.config.metrics.v3.MetricsServiceConfig",
+            "grpc_service": {
+                "envoy_grpc": {
+                    "cluster_name": "consul_telemetry_collector"
+                }
+            },
+            "transport_api_version": "V3",
+            "emit_tags_as_labels": true
+          }
         }
 EOT
 }

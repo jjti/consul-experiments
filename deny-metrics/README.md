@@ -13,8 +13,11 @@ For deny intentions and/or a cluster's [`acl.default_policy`](https://developer.
 ## Set up
 
 ```bash
-NAMESPACE=default
+NAMESPACE=consul
 
+kind create cluster --name server
+kubectl config set-context kind-server --namespace $NAMESPACE
+kubectl config use-context kind-server
 kubectl create namespace $NAMESPACE
 
 # install prometheus and grafana
@@ -22,14 +25,14 @@ helm repo add prometheus-community https://prometheus-community.github.io/helm-c
 helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
 
-helm install prometheus prometheus-community/prometheus -f ./helm/prometheus.yaml -n "$NAMESPACE"
-helm install grafana grafana/grafana -f ./helm/grafana.yaml -n "$NAMESPACE"
+helm install prometheus prometheus-community/prometheus -f ./deny-metrics/helm/prometheus.yaml -n "$NAMESPACE"
+helm install grafana grafana/grafana -f ./deny-metrics/helm/grafana.yaml -n "$NAMESPACE"
 
 # install consul
-consul-k8s install -auto-approve -verbose -f ./helm/consul.yaml --namespace "$NAMESPACE" -wait
+consul-k8s install -auto-approve -verbose -f ./deny-metrics/helm/consul.yaml --namespace "$NAMESPACE" -wait
 
 # install demo app
-kubectl apply -f ./resources/ -n "$NAMESPACE"
+kubectl apply -f ./deny-metrics/resources/ -n "$NAMESPACE"
 ```
 
 ```bash
@@ -48,6 +51,10 @@ kubectl --namespace $NAMESPACE port-forward deploy/a 19000
 curl http://localhost:19000/stats/prometheus\?filter\=server\|http
 
 open http://localhost:3000
+```
+
+```bash
+kind delete cluster --name server
 ```
 
 ## Results

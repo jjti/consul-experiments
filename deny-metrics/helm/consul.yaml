@@ -1,7 +1,7 @@
 # https://github.com/hashicorp/consul-k8s/blob/main/charts/consul/values.yaml
 global:
-  image: jjtimmons/consul:v0
-  imageConsulDataplane: jjtimmons/consul-dataplane:v4
+  image: jjtimmons/consul:v3
+  imageConsulDataplane: jjtimmons/consul-dataplane:v7
 
   datacenter: dc1
   logLevel: debug

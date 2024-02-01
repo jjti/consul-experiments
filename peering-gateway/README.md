@@ -1,4 +1,4 @@
-# Peering with Terminating Gateway
+# Peering with Mesh Gateway
 
 This is based loosely on https://github.com/t-eckert/consul-lab/tree/73b755565fc4b745b024a8372eaa1610f8d65ddc/cluster-peering-termgw
 Docs: https://developer.hashicorp.com/consul/docs/connect/gateways/mesh-gateway/peering-via-mesh-gateways
